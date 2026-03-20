@@ -945,12 +945,12 @@ def main():
             # build flow model 
             denoiser_network = networks.SkipCatMLP(inp=(Z.shape[1]*2 + control_encoder.output_size() + 1), out=Z.shape[1], hidden=1024, depth=10)
             
-            autoencoder_data = torch.load(autoencoder_path, weights_only=True)
+            autoencoder_data = torch.load(autoencoder_path, map_location=torch.device('cpu'), weights_only=True)
             encoder_network.load_state_dict(autoencoder_data['encoder'])
             decoder_network.load_state_dict(autoencoder_data['decoder'])
             
             # Load Null controller and denoiser
-            controller_data = torch.load(controller_path, weights_only=True)
+            controller_data = torch.load(controller_path, map_location=torch.device('cpu'), weights_only=True)
             control_encoder.root.load_state_dict(controller_data['control_encoder'])
             denoiser_network.load_state_dict(controller_data['denoiser'])
             print(f"Loaded controller from {controller_path}")
@@ -1045,7 +1045,11 @@ def main():
     # Initialize root motion and simulation state
     Xroot_pos = np.zeros(3, dtype=np.float32)
     Xroot_rot = np.array([1.0, 0.0, 0.0, 0.0], dtype=np.float32)
-    localPositions, localRotations, localVelocities, localAngularVelocities, _, _ = decode_pose(Zprev, Xroot_pos, Xroot_rot, dt)
+    if use_fm:
+        localPositions, localRotations, localVelocities, localAngularVelocities, _, _ = decode_pose(Zprev, Xroot_pos, Xroot_rot, dt)
+    else:
+        localVelocities = np.zeros_like(localPositions)
+        localAngularVelocities = np.zeros_like(localPositions)
 
     # Initialize input
     gameplay_input = GameplayInput(

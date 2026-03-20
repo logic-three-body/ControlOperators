@@ -6,3 +6,5 @@ data/*
 runs/*
 wandb/*
 .venv/
+*.zip
+*.part
